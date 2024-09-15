@@ -13,7 +13,7 @@ const FormLogin = () => {
     const data = {
       email: event.target.email.value,
       password: event.target.password.value,
-    };
+    }; 
 
     try {
       const res = await fetch(

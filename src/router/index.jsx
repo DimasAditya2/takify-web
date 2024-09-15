@@ -23,6 +23,7 @@ const router = createBrowserRouter([
     {
       path: "/",
       element: <HomePage/>,
+      loader: checkNotLogin
     },
     {
       path: "/tasks",
