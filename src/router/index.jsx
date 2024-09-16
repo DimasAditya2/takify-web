@@ -3,6 +3,8 @@ import HomePage from "../pages/home";
 import TaskPage from "../pages/tasks";
 import LoginPage from "../pages/login";
 import RegisterPage from "../pages/register";
+import WelcomePage from "../pages/welcome";
+import Sidebar from "../components/layouts/Sidebar";
 
 const checkLogin = () => {
   if(!localStorage.access_token) {
@@ -13,23 +15,34 @@ const checkLogin = () => {
 
 const checkNotLogin = () => {
   if(localStorage.access_token) {
-    return redirect('/tasks')
+    return redirect('/app/tasks')
   }
 
   return null
 }
 
 const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Sidebar/>,
+    loader: checkLogin,
+    children: [
+      {
+        path: "/welcome",
+        element: <WelcomePage/>,
+      },
+      {
+        path: "/tasks",
+        element: <TaskPage/>,
+      },
+    ]
+  },
     {
-      path: "/",
+      path: "/home",
       element: <HomePage/>,
       loader: checkNotLogin
     },
-    {
-      path: "/tasks",
-      element: <TaskPage/>,
-      loader: checkLogin
-    },
+
     {
       path: "/auth/login",
       element: <LoginPage/>,

@@ -37,7 +37,7 @@ const FormLogin = () => {
       localStorage.setItem("access_token", result.access_token)
 
       setLoading(false)
-      navigate("/tasks")
+      navigate("/welcome")
     } catch (error) {
       console.error("Terjadi kesalahan saat login:", error);
       setLoading(false)

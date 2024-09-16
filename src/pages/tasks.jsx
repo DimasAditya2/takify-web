@@ -1,108 +1,136 @@
-import { Link } from "react-router-dom";
-import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
-import { MdKeyboardDoubleArrowRight } from "react-icons/md";
-import { RiAddLargeFill } from "react-icons/ri";
-import { IoIosLogOut } from "react-icons/io";
-import { CiFilter } from "react-icons/ci";
-import Button from "../components/elements/Button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { MdTaskAlt } from "react-icons/md";
 
 export default function TaskPage() {
-  const [showBar, setShowBar] = useState("flex");
-  console.log(showBar)
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  async function fetchTasks() {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      console.error("No token found");
+      return;
+    }
+
+    try {
+      const res = await fetch("https://taskify-server-sage.vercel.app/tasks", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const result = await res.json();
+
+      if (result.status) {
+        setTasks(result.data);
+      } else {
+        console.log("Failed to fetch tasks:", result.message);
+      }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  }
+
+  async function handleStatusChange(taskId, newStatus) {
+    const token = localStorage.getItem("access_token");
+
+    try {
+      const res = await fetch(
+        `https://taskify-server-sage.vercel.app/tasks/${taskId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      const result = await res.json();
+
+      if (result.status) {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.task_id === taskId ? { ...task, status: newStatus } : task
+          )
+        );
+      } else {
+        console.log("Failed to update task:", result.message);
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
+  }
+
+  async function handleDelete(taskId) {
+    const token = localStorage.getItem("access_token");
+
+    try {
+      const res = await fetch(
+        `https://taskify-server-sage.vercel.app/tasks/${taskId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = await res.json();
+
+      if (result.status) {
+        setTasks((prevTasks) => prevTasks.filter((task) => task.task_id !== taskId));
+      } else {
+        console.log("Failed to delete task:", result.message);
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  }
+
   return (
-    <div className={`flex flex-row bg-slate-50  w-screen h-screen`}>
-      <div
-        className={`${showBar} flex-col bg-slate-50 w-80 min-h-screen`}
-      >
-        <div className="flex justify-between items-center w-full bg-slate-200 p-5">
-          <h1 className="">Admin</h1>
-          <button
-            type="button"
-            onClick={() => {
-              setShowBar("hidden");
-            }}
-            title="hide bar"
-          >
-            <MdKeyboardDoubleArrowLeft
-              size={28}
-              className="hover:text-red-600"
-            />
-          </button>
-        </div>
-        <div className="flex flex-col h-screen justify-between bg-slate-600 p-5">
-          <ul className="flex flex-col gap-3">
-            <li>
-              <Link to={"/"}>Welcome</Link>
-            </li>
-            <li>
-              <Link to={"/"}>Dashboard</Link>
-            </li>
-            <li>
-              <Link to={"/"}>Tasks</Link>
-            </li>
-            <li>
-              <Link to={"/"}>People</Link>
-            </li>
-            <li>
-              <Link to={"/"}>Reports</Link>
-            </li>
-            <li>
-              <Link to={"/"}>Billing</Link>
-            </li>
-            <li>
-              <Link to={"/"}>Integrations</Link>
-            </li>
-          </ul>
-          <Button className={"flex items-center gap-2 w-28"}>
-            Logout
-            <IoIosLogOut size={28} />{" "}
-          </Button>
-        </div>
-      </div>
-      <button
-        className={`${
-          showBar === "hidden" ? "absolute" : "hidden"
-        } py-5 px-4`}
-        onClick={() => setShowBar("flex")}
-      >
-        <MdKeyboardDoubleArrowRight size={28} color="blue" />
-      </button>
-      <div className="p-28 w-screen">
-        <div className="flex flex-col gap-5 justify-evenly ">
-          <h1 className="text-black text-3xl">To-Do</h1>
-          <hr />
-          <div className="flex flex-row gap-2">
-            <Button
-              type={"button"}
-              className={"flex items-center gap-1 w-28 bg-blue-500 text-white"}
-            >
-              <RiAddLargeFill /> Add Task
-            </Button>
-            <Button
-              type={"button"}
-              className={
-                "flex items-center gap-1 w-28 text-black border-2 border-gray-400"
-              }
-            >
-              <CiFilter /> Filter
-            </Button>
-          </div>
-          <div className="flex flex-row items-start justify gap-5 rounded-md border-2 border-gray-200 p-2 mt-5">
-            <form action="">
-              <input
-                id="default-checkbox"
-                type="checkbox"
-                value=""
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mt-1"
-              />
-            </form>
-            <div>
-              <h1 className="text-lg">Finish Design Grapich</h1>
-              <p>Jan, 8, 2025</p>
+    <div className="w-full p-8 bg-gray-100 min-h-screen">
+      <h1 className="text-2xl mb-5">Tasks</h1>
+      <p className="flex gap-2 items-center bg-gray-200 max-w-max px-2 rounded-md mb-8">
+        <MdTaskAlt size={16} /> {tasks.length} Tasks
+      </p>
+
+      <div className="bg-white rounded-lg shadow-md p-4">
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
+            <div key={task.task_id} className="p-2 mb-2 bg-gray-50 rounded-md flex justify-between items-center">
+              <div>
+                <p className="font-bold">{task.title}</p>
+                <p className="text-sm text-gray-600">Status: {task.status}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Dropdown untuk mengubah status */}
+                <select
+                  value={task.status}
+                  onChange={(e) => handleStatusChange(task.task_id, e.target.value)}
+                  className="border border-gray-300 rounded-md p-1"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="progress">Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <button
+                  onClick={() => handleDelete(task.task_id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded-md"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
+          ))
+        ) : (
+          <p className="text-gray-500">No tasks</p>
+        )}
       </div>
     </div>
   );
