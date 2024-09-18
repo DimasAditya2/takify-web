@@ -6,8 +6,14 @@ import { IoIosAddCircle } from "react-icons/io";
 import { IoIosLogOut } from "react-icons/io";
 import Button from "../elements/Button";
 import { Outlet } from "react-router-dom"; 
+import Modal from 'react-modal';
+
+Modal.setAppElement('#root');
 
 const Sidebar = () => {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [showBar, setShowBar] = useState(
     localStorage.getItem("showBar") || "flex"
   );
@@ -28,6 +34,73 @@ const Sidebar = () => {
   if (!isLoggedIn) {
     return null;
   }
+
+  function openModal() {
+    setIsAddModalOpen(true);
+  }
+
+  function closeModal() {
+    setIsAddModalOpen(false);
+  }
+
+  const handleAdd = async(selectedTask) => {
+    const token = localStorage.getItem("access_token")
+    try {
+      const res = await fetch("https://taskify-server-sage.vercel.app/tasks", {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(selectedTask)
+      })
+
+      if (res.ok) {
+        console.log("Add Success");
+        await fetchTasks(); 
+        closeModal()
+        // navigate("/tasks")
+      } else {
+        console.log(res)
+        console.error("Add failed:")
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function fetchTasks() {
+    setLoading(true);
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      console.error("No token found");
+      return;
+    }
+
+    try {
+      const res = await fetch("https://taskify-server-sage.vercel.app/tasks", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await res.json();
+
+      if (result.status) {
+        setLoading(false);
+      } else {
+        console.log("Failed to fetch tasks:", result.message);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      setLoading(false);
+    }
+  }
+
+
   
   return (
     <div className={`flex flex-row bg-slate-50 w-screen h-screen`}>
@@ -55,10 +128,10 @@ const Sidebar = () => {
               <Link to={"/welcome"}>Welcome</Link>
             </li>
             <li>
-              <Link to={"/tasks"} className="flex items-center gap-2">
+              <Button to={"/tasks"} onClick={() => openModal()} className="flex items-center gap-2">
                 <IoIosAddCircle color="blue" size={24} />
                 Add Task
-              </Link>
+              </Button>
             </li>
             <li>
               <Link to={"/tasks"}>Tasks</Link>
@@ -83,7 +156,102 @@ const Sidebar = () => {
         <MdKeyboardDoubleArrowRight size={28} color="blue" />
       </button>
       <Outlet/>
+
+      {isAddModalOpen && (
+        <Modal
+          isOpen={isAddModalOpen}
+          onRequestClose={closeModal}
+          contentLabel="Add Task"
+          className="modal"
+          overlayClassName="modal-overlay"
+        >
+          <h2 className="text-xl mb-4">Add Task</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAdd(selectedTask);
+            }}
+          >
+            <div className="mb-4">
+              <label className="block text-gray-700">Title</label>
+              <input
+                type="text"
+                onChange={(e) =>
+                  setSelectedTask({ ...selectedTask, title: e.target.value })
+                }
+                className="border border-gray-300 rounded-md p-2 w-full"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700">Description</label>
+              <textarea
+                onChange={(e) =>
+                  setSelectedTask({
+                    ...selectedTask,
+                    description: e.target.value,
+                  })
+                }
+                className="border border-gray-300 rounded-md p-2 w-full"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700">Status</label>
+              <select
+                onChange={(e) =>
+                  setSelectedTask({ ...selectedTask, status: e.target.value })
+                }
+                className="border border-gray-300 rounded-md p-2 w-full"
+              >
+                <option value="pending">Pending</option>
+                <option value="progress">Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700">Due Date</label>
+              <input
+                type="date"
+             
+                onChange={(e) =>
+                  setSelectedTask({ ...selectedTask, dueDate: e.target.value })
+                }
+                className="border border-gray-300 rounded-md p-2 w-full"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700">Priority</label>
+              <select
+                onChange={(e) =>
+                  setSelectedTask({ ...selectedTask, priority: e.target.value })
+                }
+                className="border border-gray-300 rounded-md p-2 w-full"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="bg-gray-500 text-white px-3 py-1 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-green-500 text-white px-3 py-1 rounded-md"
+                disabled={loading}
+              >
+                {loading == true ? 'Loading' : 'Save'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
+    
   );
 };
 

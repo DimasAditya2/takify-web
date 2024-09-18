@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const WelcomePage = () => {
     return (
-        <div className="flex items-center justify-center bg-blue-600 w-screen h-screen">
+        <div className="flex items-center justify-center  w-screen h-screen">
             <div className="text-center text-white p-10 rounded-md shadow-lg bg-blue-800 bg-opacity-75">
                 <h1 className="text-4xl font-bold mb-4">Welcome to Taskify</h1>
                 <p className="text-lg mb-8">

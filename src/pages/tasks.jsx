@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
-import Modal from "react-modal"; 
+import Modal from "react-modal";
 import { MdTaskAlt } from "react-icons/md";
 import { CiCalendarDate } from "react-icons/ci";
 import Loading from "../components/layouts/Loading";
+import Button from "../components/elements/Button";
 
-Modal.setAppElement('#root');
+Modal.setAppElement("#root");
 
 export default function TaskPage() {
   const [tasks, setTasks] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  async function fetchTasks() {
+  const fetchTasks = async() => {
+    setLoading(true);
     const token = localStorage.getItem("access_token");
 
     if (!token) {
@@ -34,50 +36,85 @@ export default function TaskPage() {
 
       if (result.status) {
         setTasks(result.data);
+        setLoading(false);
       } else {
         console.log("Failed to fetch tasks:", result.message);
+        setLoading(false);
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
+      setLoading(false);
     }
   }
 
   async function handleEdit(taskId, updatedTask) {
-  const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token");
 
-  try {
-    // eslint-disable-next-line no-unused-vars
-    const { _id, user_id, createdAt, updatedAt, __v, ...taskData } = updatedTask; 
+    try {
+      // eslint-disable-next-line no-unused-vars
+      const { _id, user_id, createdAt, updatedAt, __v, ...taskData } =
+        updatedTask;
 
-    const res = await fetch(
-      `https://taskify-server-sage.vercel.app/tasks/${taskId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(taskData),
-      }
-    );
-
-    const result = await res.json();
-
-    if (result.status) {
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.task_id === taskId ? { ...task, ...taskData } : task
-        )
+      const res = await fetch(
+        `https://taskify-server-sage.vercel.app/tasks/${taskId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(taskData),
+        }
       );
-      closeModal();
-    } else {
-      console.log("Failed to update task:", result.message);
-    }
-  } catch (error) {
-    console.error("Error updating task:", error);
-  }
-}
 
+      const result = await res.json();
+
+      if (result.status) {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.task_id === taskId ? { ...task, ...taskData } : task
+          )
+        );
+        closeModal();
+      } else {
+        console.log("Failed to update task:", result.message);
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
+  }
+
+  async function handleDelete(taskId) {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      console.error("No token found");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `https://taskify-server-sage.vercel.app/tasks/${taskId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        console.log("Delete success");
+        fetchTasks(); 
+      } else {
+        const result = await res.json();
+        console.error("Delete failed:", result.message || "Unknown error");
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  }
 
   function openModal(task) {
     setSelectedTask(task);
@@ -93,8 +130,14 @@ export default function TaskPage() {
     if (status === "progress") return "bg-yellow-400";
     if (status === "completed") return "bg-green-400";
     if (status === "pending") return "bg-red-400";
-    return "bg-gray-300"; 
+    return "bg-gray-300";
   };
+
+  if (!loading && tasks.length == 0) {
+    return (
+      <div className="flex justify-center w-full items-center text-3xl">No Task Found</div>
+    );
+  }
 
   return (
     <div className="w-full p-8 bg-gray-100 min-h-screen">
@@ -126,18 +169,21 @@ export default function TaskPage() {
                   </span>
                 </p>
                 <p className="flex gap-2 items-center">
-                   {task.dueDate && <CiCalendarDate size={22} color="red" />}
-                  {task.dueDate?.split('T')[0] || ''}
+                  {task.dueDate && <CiCalendarDate size={22} color="red" />}
+                  {task.dueDate?.split("T")[0] || ""}
                 </p>
               </div>
-              
-              <div className="">
-                <button
-                  onClick={() => openModal(task)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded-md"
+
+              <div className="flex gap-2">
+                <Button
+                  variant={"bg-red-500 text-white"}
+                  onClick={() => handleDelete(task.task_id)}
                 >
+                  Delete
+                </Button>
+                <Button onClick={() => openModal(task)} className={"w-22"}>
                   Edit
-                </button>
+                </Button>
               </div>
             </div>
           ))
@@ -178,7 +224,10 @@ export default function TaskPage() {
               <textarea
                 value={selectedTask.description}
                 onChange={(e) =>
-                  setSelectedTask({ ...selectedTask, description: e.target.value })
+                  setSelectedTask({
+                    ...selectedTask,
+                    description: e.target.value,
+                  })
                 }
                 className="border border-gray-300 rounded-md p-2 w-full"
               />
@@ -201,7 +250,9 @@ export default function TaskPage() {
               <label className="block text-gray-700">Due Date</label>
               <input
                 type="date"
-                value={selectedTask.dueDate ? selectedTask.dueDate.split('T')[0] : ''}
+                value={
+                  selectedTask.dueDate ? selectedTask.dueDate.split("T")[0] : ""
+                }
                 onChange={(e) =>
                   setSelectedTask({ ...selectedTask, dueDate: e.target.value })
                 }
@@ -242,5 +293,4 @@ export default function TaskPage() {
       )}
     </div>
   );
-
 }
