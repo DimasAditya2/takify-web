@@ -52,7 +52,7 @@ To get the project running locally, follow these steps:
 Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/crud-application.git
+https://github.com/DimasAditya2/taskify-web.git
 ```
 
 Navigate to the project directory:
