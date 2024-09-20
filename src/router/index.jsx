@@ -15,7 +15,8 @@ const checkLogin = () => {
 
 const checkNotLogin = () => {
   if(localStorage.access_token) {
-    return redirect('/app/tasks')
+    console.log('redirect')
+    return redirect('/tasks')
   }
 
   return null

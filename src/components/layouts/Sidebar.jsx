@@ -43,32 +43,6 @@ const Sidebar = () => {
     setIsAddModalOpen(false);
   }
 
-  const handleAdd = async(selectedTask) => {
-    const token = localStorage.getItem("access_token")
-    try {
-      const res = await fetch("https://taskify-server-sage.vercel.app/tasks", {
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(selectedTask)
-      })
-
-      if (res.ok) {
-        console.log("Add Success");
-        await fetchTasks(); 
-        closeModal()
-        // navigate("/tasks")
-      } else {
-        console.log(res)
-        console.error("Add failed:")
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   async function fetchTasks() {
     setLoading(true);
     const token = localStorage.getItem("access_token");
@@ -100,13 +74,38 @@ const Sidebar = () => {
     }
   }
 
+  const handleAdd = async(selectedTask) => {
+    const token = localStorage.getItem("access_token")
+    try {
+      const res = await fetch("https://taskify-server-sage.vercel.app/tasks", {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(selectedTask)
+      })
+
+      if (res.ok) {
+        console.log("Add Success");
+        await fetchTasks(); 
+        closeModal()
+        navigate("/tasks")
+      } else {
+        console.log(res)
+        console.error("Add failed:")
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   
   return (
     <div className={`flex flex-row bg-slate-50 w-screen h-screen`}>
       <div className={`${showBar} flex-col bg-slate-50 w-80 min-h-screen`}>
         <div className="flex justify-between items-center w-full bg-slate-200 p-5">
-          <h1 className="">Admin</h1>
+          <h1 className="">Taskify</h1>
           <button
             type="button"
             onClick={() => {
@@ -135,9 +134,6 @@ const Sidebar = () => {
             </li>
             <li>
               <Link to={"/tasks"}>Tasks</Link>
-            </li>
-            <li>
-              <Link to={"/faq"}>Faq</Link>
             </li>
           </ul>
           <Button
