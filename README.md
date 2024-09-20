@@ -1,6 +1,9 @@
 # Web Taskify 
 This is a simple client-side application that demonstrates basic CRUD (Create, Read, Update, Delete) functionality. The application allows users to manage data by adding, viewing, updating, and deleting items.
 
+## Deployment
+- vercel: https://taskify-blond-sigma.vercel.app/
+
 ## Features
 - Create: Users can add new To do to the list.
 - Read: Users can view the list of To do.
