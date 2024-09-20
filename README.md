@@ -11,9 +11,9 @@ This is a simple client-side application that demonstrates basic CRUD (Create, R
 - Delete: Users can remove To do .
 
 ## Technologies Used
-React: Front-end framework for building the user interface.
-react-router-dom: For handling routing between different pages (if applicable).
-Tailwind CSS: For styling the user interface.
+- React: Front-end framework for building the user interface.
+- react-router-dom: For handling routing between different pages (if applicable).
+- Tailwind CSS: For styling the user interface.
 
 ## Screenshot
 
